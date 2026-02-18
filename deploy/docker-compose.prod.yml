@@ -7,16 +7,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "${EXPOSE_PORT:-8000}:8000"
-    environment:
-      - DATABASE_URL=postgresql+asyncpg://agent:${DB_PASSWORD:-agentpass}@postgres:5432/agent_brain
-      - REDIS_URL=redis://redis:6379/0
-      - OLLAMA_BASE_URL=http://host.docker.internal:11434
-      - LLM_PROVIDER=ollama
-      - LLM_MODEL=${LLM_MODEL:-llama3.2:3b}
-      - EMBEDDING_PROVIDER=ollama
-      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-nomic-embed-text}
-      - PROJECT_PATH_MAPPINGS=/host-projects=/host-projects
-      - SECRET_KEY=${SECRET_KEY:-changeme}
+    env_file:
+      - .env
     depends_on:
       postgres:
         condition: service_healthy

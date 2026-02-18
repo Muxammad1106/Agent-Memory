@@ -142,7 +142,7 @@ cat > $INSTALL_DIR/.env << EOF
 # Agent Memory MCP Server - mcp.nomeai.space
 # Generated: $(date)
 
-DATABASE_URL=postgresql+asyncpg://agent:$DB_PASSWORD@postgres:5432/agent_brain
+DATABASE_URL=postgresql+asyncpg://agent:$DB_PASSWORD@postgres:5432/agent_brain?ssl=disable
 REDIS_URL=redis://redis:6379/0
 OLLAMA_BASE_URL=http://host.docker.internal:11434
 
