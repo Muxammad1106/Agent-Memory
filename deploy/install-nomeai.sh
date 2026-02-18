@@ -115,10 +115,8 @@ log_success "Ollama ready"
 if [[ -d "$INSTALL_DIR/.git" ]]; then
     log_info "Updating existing installation..."
     git pull origin main || true
-    # Copy production docker-compose
+    # Copy production docker-compose (no external ports for PostgreSQL)
     cp deploy/docker-compose.prod.yml docker-compose.yml
-    # Add port mapping to avoid conflict with existing PostgreSQL
-    sed -i 's/image: pgvector\/pgvector:pg16/image: pgvector\/pgvector:pg16\n    ports:\n      - "5433:5432"/' docker-compose.yml
 else
     log_info "Cloning repository..."
     # If repo doesn't exist yet, create from current files
@@ -129,10 +127,8 @@ else
             create_project_files
         }
     fi
-    # Copy production docker-compose
+    # Copy production docker-compose (no external ports for PostgreSQL)
     cp deploy/docker-compose.prod.yml docker-compose.yml
-    # Add port mapping to avoid conflict with existing PostgreSQL
-    sed -i 's/image: pgvector\/pgvector:pg16/image: pgvector\/pgvector:pg16\n    ports:\n      - "5433:5432"/' docker-compose.yml
 fi
 
 #===============================================================================
