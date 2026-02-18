@@ -109,20 +109,30 @@ done
 log_success "Ollama ready"
 
 #===============================================================================
-# Clone Repository
+# Clone or update repository
 #===============================================================================
 
-log_info "Setting up project..."
-mkdir -p $INSTALL_DIR
-cd $INSTALL_DIR
-
-if [[ -d ".git" ]]; then
+if [[ -d "$INSTALL_DIR/.git" ]]; then
+    log_info "Updating existing installation..."
     git pull origin main || true
+    # Copy production docker-compose
+    cp deploy/docker-compose.prod.yml docker-compose.yml
+    # Add port mapping to avoid conflict with existing PostgreSQL
+    sed -i 's/image: pgvector\/pgvector:pg16/image: pgvector\/pgvector:pg16\n    ports:\n      - "5433:5432"/' docker-compose.yml
 else
-    git clone https://github.com/davranaff/Agent-Memory.git . || {
-        log_error "Failed to clone repository"
-        exit 1
-    }
+    log_info "Cloning repository..."
+    # If repo doesn't exist yet, create from current files
+    if [[ ! -f "$INSTALL_DIR/docker-compose.yml" ]]; then
+        # Download from GitHub (replace with actual repo URL)
+        git clone https://github.com/davranaff/Agent-Memory.git . 2>/dev/null || {
+            log_warn "Repository not found, creating from template..."
+            create_project_files
+        }
+    fi
+    # Copy production docker-compose
+    cp deploy/docker-compose.prod.yml docker-compose.yml
+    # Add port mapping to avoid conflict with existing PostgreSQL
+    sed -i 's/image: pgvector\/pgvector:pg16/image: pgvector\/pgvector:pg16\n    ports:\n      - "5433:5432"/' docker-compose.yml
 fi
 
 #===============================================================================
