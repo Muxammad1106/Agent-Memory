@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Configuration | Agent Brain</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0f0f1a 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-gradient::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 70%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+                        radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.04) 0%, transparent 50%);
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(30px, -30px) rotate(5deg); }
+            66% { transform: translate(-20px, 20px) rotate(-5deg); }
+        }
+
+        /* Grid pattern */
+        .grid-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 60px 20px;
+            position: relative;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.3);
+        }
+
+        .logo-text {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, #a0a0a0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header h1 {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #ffffff 0%, #6366f1 50%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 18px;
+            color: #888;
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Glass card */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 32px;
+            margin-bottom: 24px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        /* IDE selector */
+        .ide-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .ide-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 20px 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ide-btn:hover {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .ide-btn.active {
+            background: rgba(99, 102, 241, 0.15);
+            border-color: #6366f1;
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.2);
+        }
+
+        .ide-btn .icon {
+            font-size: 32px;
+        }
+
+        .ide-btn .name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #ccc;
+        }
+
+        .ide-btn.active .name {
+            color: #fff;
+        }
+
+        /* Code block */
+        .code-container {
+            position: relative;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .code-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #888;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .code-title .dot {
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .copy-btn {
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #a5b4fc;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .copy-btn:hover {
+            background: rgba(99, 102, 241, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .copy-btn.copied {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: rgba(34, 197, 94, 0.3);
+            color: #86efac;
+        }
+
+        .code-block {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .code-block pre {
+            margin: 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #e0e0e0;
+        }
+
+        .code-block .key { color: #a5b4fc; }
+        .code-block .string { color: #86efac; }
+        .code-block .bracket { color: #888; }
+
+        /* Config path */
+        .config-path {
+            margin-top: 24px;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .config-path .icon {
+            font-size: 20px;
+        }
+
+        .config-path .path {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: #888;
+        }
+
+        /* Instructions */
+        .instructions {
+            margin-top: 40px;
+        }
+
+        .instructions h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .step {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .step:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-content p {
+            color: #aaa;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .step-content code {
+            background: rgba(99, 102, 241, 0.15);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: #a5b4fc;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .footer p {
+            color: #555;
+            font-size: 14px;
+        }
+
+        .footer a {
+            color: #6366f1;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer a:hover {
+            color: #8b5cf6;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .header h1 {
+                font-size: 28px;
+            }
+            
+            .ide-selector {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .code-block pre {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="grid-pattern"></div>
+    
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">🧠</div>
+                <span class="logo-text">Agent Brain</span>
+            </div>
+            <h1>MCP Configuration</h1>
+            <p>Connect your AI-powered IDE to Agent Brain memory server</p>
+        </header>
+
+        <div class="glass-card">
+            <h2 style="font-size: 16px; font-weight: 500; color: #888; margin-bottom: 20px;">Select your IDE</h2>
+            
+            <div class="ide-selector">
+                <button class="ide-btn active" data-ide="windsurf" onclick="selectIDE('windsurf')">
+                    <span class="icon">🏄</span>
+                    <span class="name">Windsurf</span>
+                </button>
+                <button class="ide-btn" data-ide="cursor" onclick="selectIDE('cursor')">
+                    <span class="icon">⚡</span>
+                    <span class="name">Cursor</span>
+                </button>
+                <button class="ide-btn" data-ide="antigravity" onclick="selectIDE('antigravity')">
+                    <span class="icon">🚀</span>
+                    <span class="name">Antigravity</span>
+                </button>
+                <button class="ide-btn" data-ide="vscode" onclick="selectIDE('vscode')">
+                    <span class="icon">💻</span>
+                    <span class="name">VS Code</span>
+                </button>
+            </div>
+
+            <div class="code-container">
+                <div class="code-header">
+                    <div class="code-title">
+                        <span class="dot"></span>
+                        <span>mcp_config.json</span>
+                    </div>
+                    <button class="copy-btn" onclick="copyConfig()">
+                        <span id="copy-icon">📋</span>
+                        <span id="copy-text">Copy</span>
+                    </button>
+                </div>
+                
+                <div class="code-block">
+                    <pre id="config-code"><span class="bracket">{</span>
+  <span class="key">"mcpServers"</span>: <span class="bracket">{</span>
+    <span class="key">"agent-brain"</span>: <span class="bracket">{</span>
+      <span class="key">"serverType"</span>: <span class="string">"sse"</span>,
+      <span class="key">"url"</span>: <span class="string">"{{ server_url }}/mcp/sse"</span>
+    <span class="bracket">}</span>
+  <span class="bracket">}</span>
+<span class="bracket">}</span></pre>
+                </div>
+
+                <div class="config-path" id="config-path">
+                    <span class="icon">📁</span>
+                    <span class="path">~/.codeium/windsurf/mcp_config.json</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card instructions">
+            <h3>Quick Setup</h3>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <p>Copy the configuration above by clicking the <code>Copy</code> button</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <p>Open the config file path shown above in your IDE or terminal</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <p>Paste the configuration and save the file</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <p>Restart your IDE to connect to Agent Brain</p>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>Agent Brain MCP Server • <a href="/">API Docs</a> • <a href="/health">Health Check</a></p>
+        </footer>
+    </div>
+
+    <script>
+        const serverUrl = '{{ server_url }}';
+        
+        const configPaths = {
+            windsurf: '~/.codeium/windsurf/mcp_config.json',
+            cursor: '~/.cursor/mcp.json',
+            antigravity: '~/.antigravity/mcp_config.json',
+            vscode: '~/.vscode/mcp_config.json'
+        };
+
+        function selectIDE(ide) {
+            // Update active button
+            document.querySelectorAll('.ide-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-ide="${ide}"]`).classList.add('active');
+            
+            // Update config path
+            document.getElementById('config-path').querySelector('.path').textContent = configPaths[ide];
+            
+            // Update code display
+            updateCodeDisplay(ide);
+        }
+
+        function updateCodeDisplay(ide) {
+            let configCode;
+            
+            switch(ide) {
+                case 'windsurf':
+                    configCode = `<span class="bracket">{</span>\n  <span class="key">"mcpServers"</span>: <span class="bracket">{</span>\n    <span class="key">"agent-brain"</span>: <span class="bracket">{</span>\n      <span class="key">"serverType"</span>: <span class="string">"sse"</span>,\n      <span class="key">"url"</span>: <span class="string">"${serverUrl}/mcp/sse"</span>\n    <span class="bracket">}</span>\n  <span class="bracket">}</span>\n<span class="bracket">}</span>`;
+                    break;
+                    
+                case 'cursor':
+                    configCode = `<span class="bracket">{</span>\n  <span class="key">"mcpServers"</span>: <span class="bracket">{</span>\n    <span class="key">"agent-brain"</span>: <span class="bracket">{</span>\n      <span class="key">"command"</span>: <span class="string">"sse"</span>,\n      <span class="key">"args"</span>: <span class="bracket">[</span><span class="string">"${serverUrl}/mcp/sse"</span><span class="bracket">]</span>\n    <span class="bracket">}</span>\n  <span class="bracket">}</span>\n<span class="bracket">}</span>`;
+                    break;
+                    
+                case 'antigravity':
+                    configCode = `<span class="bracket">{</span>\n  <span class="key">"mcpServers"</span>: <span class="bracket">{</span>\n    <span class="key">"agent-brain"</span>: <span class="bracket">{</span>\n      <span class="key">"transport"</span>: <span class="string">"sse"</span>,\n      <span class="key">"url"</span>: <span class="string">"${serverUrl}/mcp/sse"</span>\n    <span class="bracket">}</span>\n  <span class="bracket">}</span>\n<span class="bracket">}</span>`;
+                    break;
+                    
+                case 'vscode':
+                    configCode = `<span class="bracket">{</span>\n  <span class="key">"mcpServers"</span>: <span class="bracket">{</span>\n    <span class="key">"agent-brain"</span>: <span class="bracket">{</span>\n      <span class="key">"type"</span>: <span class="string">"sse"</span>,\n      <span class="key">"url"</span>: <span class="string">"${serverUrl}/mcp/sse"</span>\n    <span class="bracket">}</span>\n  <span class="bracket">}</span>\n<span class="bracket">}</span>`;
+                    break;
+                    
+                default:
+                    configCode = `<span class="bracket">{</span>\n  <span class="key">"mcpServers"</span>: <span class="bracket">{</span>\n    <span class="key">"agent-brain"</span>: <span class="bracket">{</span>\n      <span class="key">"serverType"</span>: <span class="string">"sse"</span>,\n      <span class="key">"url"</span>: <span class="string">"${serverUrl}/mcp/sse"</span>\n    <span class="bracket">}</span>\n  <span class="bracket">}</span>\n<span class="bracket">}</span>`;
+            }
+            
+            document.getElementById('config-code').innerHTML = configCode;
+        }
+
+        // Initialize with Windsurf config
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCodeDisplay('windsurf');
+        });
+
+        function copyConfig() {
+            const activeIDE = document.querySelector('.ide-btn.active').dataset.ide;
+            let config;
+            
+            switch(activeIDE) {
+                case 'windsurf':
+                    config = {
+                        mcpServers: {
+                            "agent-brain": {
+                                serverType: "sse",
+                                url: `${serverUrl}/mcp/sse`
+                            }
+                        }
+                    };
+                    break;
+                    
+                case 'cursor':
+                    config = {
+                        mcpServers: {
+                            "agent-brain": {
+                                command: "sse",
+                                args: [`${serverUrl}/mcp/sse`]
+                            }
+                        }
+                    };
+                    break;
+                    
+                case 'antigravity':
+                    config = {
+                        mcpServers: {
+                            "agent-brain": {
+                                transport: "sse",
+                                url: `${serverUrl}/mcp/sse`
+                            }
+                        }
+                    };
+                    break;
+                    
+                case 'vscode':
+                    config = {
+                        mcpServers: {
+                            "agent-brain": {
+                                type: "sse",
+                                url: `${serverUrl}/mcp/sse`
+                            }
+                        }
+                    };
+                    break;
+                    
+                default:
+                    config = {
+                        mcpServers: {
+                            "agent-brain": {
+                                serverType: "sse",
+                                url: `${serverUrl}/mcp/sse`
+                            }
+                        }
+                    };
+            }
+            
+            navigator.clipboard.writeText(JSON.stringify(config, null, 2)).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                const icon = document.getElementById('copy-icon');
+                const text = document.getElementById('copy-text');
+                
+                btn.classList.add('copied');
+                icon.textContent = '✓';
+                text.textContent = 'Copied!';
+                
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    icon.textContent = '📋';
+                    text.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
