@@ -129,7 +129,7 @@ def create_app() -> FastAPI:
             return await call_next(request)
 
         public_paths = {"/health", "/docs", "/openapi.json", "/redoc", "/get-mcp-conf", "/mcp-config", "/dashboard"}
-        if request.url.path in public_paths or request.url.path.startswith("/docs") or request.url.path.startswith("/mcp"):
+        if request.url.path in public_paths or request.url.path.startswith("/docs") or request.url.path.startswith("/mcp") or request.url.path.startswith("/projects"):
             return await call_next(request)
 
         provided_key = request.headers.get("x-api-key")

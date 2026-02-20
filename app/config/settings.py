@@ -96,7 +96,7 @@ class Settings(BaseSettings):
         description="Comma-separated host/container path mappings: /host=/container,/host2=/container2",
     )
     cors_allow_origins: str = Field(
-        default="http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173",
+        default="http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173,https://mcp.nomeai.space,http://mcp.nomeai.space",
         description="Comma-separated CORS origins; use * only for trusted dev environments",
     )
     cors_allow_credentials: bool = Field(default=True)
