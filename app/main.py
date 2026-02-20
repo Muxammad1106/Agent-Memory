@@ -89,9 +89,8 @@ def create_app() -> FastAPI:
     @app.get("/get-mcp-conf", response_class=HTMLResponse)
     async def get_mcp_config_page(request: Request):
         """MCP configuration page for IDE setup."""
-        # Determine server URL
         host = request.headers.get("host", "localhost:8000")
-        scheme = request.headers.get("x-forwarded-proto", "https" if "443" in host else "http")
+        scheme = request.headers.get("x-forwarded-proto", "https")
         server_url = f"{scheme}://{host}"
         
         return templates.TemplateResponse(
@@ -103,7 +102,7 @@ def create_app() -> FastAPI:
     async def get_mcp_config_page_alt(request: Request):
         """Alias for /get-mcp-conf."""
         host = request.headers.get("host", "localhost:8000")
-        scheme = request.headers.get("x-forwarded-proto", "https" if "443" in host else "http")
+        scheme = request.headers.get("x-forwarded-proto", "https")
         server_url = f"{scheme}://{host}"
         
         return templates.TemplateResponse(
@@ -115,7 +114,7 @@ def create_app() -> FastAPI:
     async def get_projects_dashboard(request: Request):
         """Projects dashboard with beautiful UI."""
         host = request.headers.get("host", "localhost:8000")
-        scheme = request.headers.get("x-forwarded-proto", "https" if "443" in host else "http")
+        scheme = request.headers.get("x-forwarded-proto", "https")
         server_url = f"{scheme}://{host}"
         
         return templates.TemplateResponse(
