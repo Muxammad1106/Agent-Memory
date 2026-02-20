@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 from fastapi import APIRouter, HTTPException, Depends, Query, Body
@@ -632,6 +633,134 @@ async def list_projects(
         
     except Exception as e:
         logger.error(f"Error listing projects: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{project_id}/security", response_model=Dict[str, Any])
+async def get_project_security_analysis(
+    project_id: str,
+    db: AsyncSession = Depends(get_db)
+) -> Dict[str, Any]:
+    """Get security analysis for a project."""
+    try:
+        # Mock security analysis - in real implementation, this would use security scanning tools
+        security_analysis = {
+            "project_id": project_id,
+            "scan_timestamp": datetime.now(timezone.utc).isoformat(),
+            "overall_score": 85,  # 0-100
+            "vulnerabilities": [
+                {
+                    "id": "vuln_001",
+                    "severity": "medium",
+                    "type": "insecure_dependency",
+                    "description": "Outdated dependency found",
+                    "file": "package.json",
+                    "line": 15,
+                    "recommendation": "Update to latest version"
+                },
+                {
+                    "id": "vuln_002", 
+                    "severity": "low",
+                    "type": "hardcoded_secret",
+                    "description": "Potential hardcoded API key",
+                    "file": "config.py",
+                    "line": 42,
+                    "recommendation": "Use environment variables"
+                }
+            ],
+            "security_metrics": {
+                "total_vulnerabilities": 2,
+                "critical": 0,
+                "high": 0,
+                "medium": 1,
+                "low": 1,
+                "security_hotspots": 5,
+                "security_debt_ratio": 0.12
+            },
+            "recommendations": [
+                "Implement dependency scanning in CI/CD",
+                "Use secrets management system",
+                "Add input validation",
+                "Enable security headers"
+            ]
+        }
+        
+        return security_analysis
+        
+    except Exception as e:
+        logger.error(f"Error getting security analysis: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{project_id}/details", response_model=Dict[str, Any])
+async def get_project_details(
+    project_id: str,
+    db: AsyncSession = Depends(get_db)
+) -> Dict[str, Any]:
+    """Get detailed information about a project."""
+    try:
+        from sqlalchemy import select
+        from app.core.models import Project, Component
+        
+        # Get project
+        stmt = select(Project).where(Project.id == project_id)
+        result = await db.execute(stmt)
+        project = result.scalar_one_or_none()
+        
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        # Get components count by type
+        components_stmt = select(Component).where(Component.project_id == project_id)
+        components_result = await db.execute(components_stmt)
+        components = components_result.scalars().all()
+        
+        component_stats = {}
+        for comp in components:
+            comp_type = comp.type
+            if comp_type not in component_stats:
+                component_stats[comp_type] = 0
+            component_stats[comp_type] += 1
+        
+        # Calculate pages read (estimated)
+        pages_read = math.ceil(project.total_lines / 50) if project.total_lines else 0
+        
+        return {
+            "project": {
+                "id": str(project.id),
+                "name": project.name,
+                "path": project.path,
+                "analysis_status": project.analysis_status,
+                "last_analyzed": project.last_analyzed.isoformat() if project.last_analyzed else None,
+                "total_files": project.total_files,
+                "total_lines": project.total_lines,
+                "pages_read": pages_read,
+                "architecture_type": project.architecture_type,
+                "languages": project.languages or [],
+                "frameworks": project.frameworks or [],
+                "databases": project.databases or [],
+                "build_tools": project.build_tools or []
+            },
+            "component_statistics": component_stats,
+            "mcp_analysis": {
+                "files_processed": project.total_files,
+                "functions_extracted": component_stats.get("function", 0),
+                "classes_extracted": component_stats.get("class", 0),
+                "dependencies_mapped": sum(len(comp.dependencies or []) for comp in components),
+                "last_scan": project.last_analyzed.isoformat() if project.last_analyzed else None
+            },
+            "quality_metrics": {
+                "code_complexity": "medium",
+                "test_coverage": "unknown",
+                "documentation_coverage": "unknown",
+                "technical_debt": "low"
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting project details: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

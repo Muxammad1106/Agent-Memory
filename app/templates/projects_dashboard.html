@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects Dashboard | Agent Brain</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0f0f1a 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-gradient::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 70%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+                        radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.04) 0%, transparent 50%);
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(30px, -30px) rotate(120deg); }
+            66% { transform: translate(-20px, 20px) rotate(240deg); }
+        }
+
+        /* Header */
+        .header {
+            background: rgba(15, 15, 26, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.5rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: #a0a0a0;
+            text-decoration: none;
+            transition: color 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            color: #e0e0e0;
+        }
+
+        /* Main container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Stats cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #a0a0a0;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Projects grid */
+        .projects-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .projects-title {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #e0e0e0;
+        }
+
+        .search-box {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 0.8rem 1.2rem;
+            color: #e0e0e0;
+            width: 300px;
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #6366f1;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .project-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .project-card:hover::before {
+            transform: translateX(0);
+        }
+
+        .project-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .project-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+
+        .project-name {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #e0e0e0;
+            margin-bottom: 0.5rem;
+        }
+
+        .project-path {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: #666;
+            word-break: break-all;
+        }
+
+        .project-status {
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-analyzed {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .status-pending {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .status-error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .project-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #6366f1;
+            margin-bottom: 0.3rem;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .project-tech {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tech-tag {
+            padding: 0.3rem 0.8rem;
+            background: rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .project-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Loading state */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #888;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #888;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-title {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: #a0a0a0;
+        }
+
+        .empty-description {
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: rgba(15, 15, 26, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            margin: auto;
+            max-width: 900px;
+            max-height: 90vh;
+            width: 90%;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #e0e0e0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .modal-close:hover {
+            color: #e0e0e0;
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .section {
+            margin-bottom: 2.5rem;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #e0e0e0;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.2rem;
+        }
+
+        .info-label {
+            font-size: 0.8rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #e0e0e0;
+        }
+
+        /* Vulnerability styles */
+        .vulnerability-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .vulnerability-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .vulnerability-title {
+            font-weight: 600;
+            color: #e0e0e0;
+            margin-bottom: 0.3rem;
+        }
+
+        .vulnerability-file {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .severity-badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .severity-critical {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .severity-high {
+            background: rgba(251, 146, 60, 0.2);
+            color: #fb923c;
+            border: 1px solid rgba(251, 146, 60, 0.3);
+        }
+
+        .severity-medium {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .severity-low {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .vulnerability-description {
+            color: #a0a0a0;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .vulnerability-recommendation {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            font-size: 0.9rem;
+            color: #a5b4fc;
+        }
+
+        .security-score {
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+        }
+
+        .score-value {
+            font-size: 4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .score-label {
+            color: #a0a0a0;
+            font-size: 1.1rem;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tab {
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            color: #888;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab:hover {
+            color: #e0e0e0;
+        }
+
+        .tab.active {
+            color: #6366f1;
+            border-bottom-color: #6366f1;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+
+            .projects-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 1rem;
+            }
+
+            .section-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">Agent Brain</div>
+            <nav class="nav-links">
+                <a href="/projects" class="nav-link">Projects</a>
+                <a href="/get-mcp-conf" class="nav-link">MCP Config</a>
+                <a href="/docs" class="nav-link">API Docs</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalProjects">0</div>
+                <div class="stat-label">Total Projects</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalFiles">0</div>
+                <div class="stat-label">Files Analyzed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalLines">0</div>
+                <div class="stat-label">Lines of Code</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalPages">0</div>
+                <div class="stat-label">Pages Read</div>
+            </div>
+        </div>
+
+        <!-- Projects Section -->
+        <div class="projects-header">
+            <h1 class="projects-title">Projects</h1>
+            <input type="text" class="search-box" id="searchBox" placeholder="Search projects...">
+        </div>
+
+        <div class="projects-grid" id="projectsGrid">
+            <div class="loading">
+                <div class="spinner"></div>
+                <div>Loading projects...</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for project details -->
+    <div class="modal" id="projectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Project Details</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('overview')">Overview</button>
+                    <button class="tab" onclick="switchTab('security')">Security</button>
+                    <button class="tab" onclick="switchTab('mcp')">MCP Analysis</button>
+                </div>
+
+                <div class="tab-content active" id="overviewTab">
+                    <div class="section">
+                        <h3 class="section-title">📊 Project Information</h3>
+                        <div class="section-grid" id="projectInfoGrid">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h3 class="section-title">🔧 Component Statistics</h3>
+                        <div class="section-grid" id="componentStatsGrid">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h3 class="section-title">📈 Quality Metrics</h3>
+                        <div class="section-grid" id="qualityMetricsGrid">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="securityTab">
+                    <div class="security-score">
+                        <div class="score-value" id="securityScoreValue">85</div>
+                        <div class="score-label">Security Score</div>
+                    </div>
+
+                    <div class="section">
+                        <h3 class="section-title">🛡️ Security Metrics</h3>
+                        <div class="section-grid" id="securityMetricsGrid">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h3 class="section-title">⚠️ Vulnerabilities</h3>
+                        <div id="vulnerabilitiesList">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h3 class="section-title">💡 Security Recommendations</h3>
+                        <div id="securityRecommendations">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="mcpTab">
+                    <div class="section">
+                        <h3 class="section-title">🤖 MCP Analysis Results</h3>
+                        <div class="section-grid" id="mcpAnalysisGrid">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h3 class="section-title">📚 Processing Statistics</h3>
+                        <div class="section-grid" id="processingStatsGrid">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        
+        // State management
+        let projects = [];
+        let filteredProjects = [];
+        
+        // DOM elements
+        const projectsGrid = document.getElementById('projectsGrid');
+        const searchBox = document.getElementById('searchBox');
+        const totalProjects = document.getElementById('totalProjects');
+        const totalFiles = document.getElementById('totalFiles');
+        const totalLines = document.getElementById('totalLines');
+        const totalPages = document.getElementById('totalPages');
+        const projectModal = document.getElementById('projectModal');
+        const modalTitle = document.getElementById('modalTitle');
+        
+        // Current project data
+        let currentProject = null;
+        let currentProjectDetails = null;
+        let currentProjectSecurity = null;
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProjects();
+            setupEventListeners();
+        });
+        
+        // Event listeners
+        function setupEventListeners() {
+            searchBox.addEventListener('input', handleSearch);
+        }
+        
+        // Search functionality
+        function handleSearch(e) {
+            const query = e.target.value.toLowerCase();
+            filteredProjects = projects.filter(project => 
+                project.name.toLowerCase().includes(query) ||
+                project.path.toLowerCase().includes(query) ||
+                project.languages?.some(lang => lang.toLowerCase().includes(query))
+            );
+            renderProjects();
+        }
+        
+        // Load projects from API
+        async function loadProjects() {
+            try {
+                const response = await fetch(`${API_BASE}/projects?limit=50`);
+                if (!response.ok) throw new Error('Failed to load projects');
+                
+                projects = await response.json();
+                filteredProjects = [...projects];
+                
+                updateStatistics();
+                renderProjects();
+            } catch (error) {
+                console.error('Error loading projects:', error);
+                renderError();
+            }
+        }
+        
+        // Update statistics
+        function updateStatistics() {
+            const stats = projects.reduce((acc, project) => {
+                acc.totalProjects++;
+                acc.totalFiles += project.total_files || 0;
+                acc.totalLines += project.total_lines || 0;
+                acc.totalPages += Math.floor((project.total_lines || 0) / 50); // Estimate pages
+                return acc;
+            }, { totalProjects: 0, totalFiles: 0, totalLines: 0, totalPages: 0 });
+            
+            // Animate counters
+            animateCounter(totalProjects, stats.totalProjects);
+            animateCounter(totalFiles, stats.totalFiles);
+            animateCounter(totalLines, stats.totalLines);
+            animateCounter(totalPages, stats.totalPages);
+        }
+        
+        // Animate counter
+        function animateCounter(element, target) {
+            const duration = 2000;
+            const start = 0;
+            const increment = target / (duration / 16);
+            let current = start;
+            
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                element.textContent = Math.floor(current).toLocaleString();
+            }, 16);
+        }
+        
+        // Render projects
+        function renderProjects() {
+            if (filteredProjects.length === 0) {
+                renderEmptyState();
+                return;
+            }
+            
+            projectsGrid.innerHTML = filteredProjects.map(project => createProjectCard(project)).join('');
+        }
+        
+        // Create project card HTML
+        function createProjectCard(project) {
+            const statusClass = getStatusClass(project.analysis_status);
+            const techTags = (project.languages || []).map(lang => 
+                `<span class="tech-tag">${lang}</span>`
+            ).join('');
+            
+            return `
+                <div class="project-card" onclick="openProject('${project.id}')">
+                    <div class="project-header">
+                        <div>
+                            <div class="project-name">${project.name}</div>
+                            <div class="project-path">${project.path}</div>
+                        </div>
+                        <div class="project-status ${statusClass}">${project.analysis_status || 'Unknown'}</div>
+                    </div>
+                    
+                    <div class="project-metrics">
+                        <div class="metric">
+                            <div class="metric-value">${project.total_files || 0}</div>
+                            <div class="metric-label">Files</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">${formatNumber(project.total_lines || 0)}</div>
+                            <div class="metric-label">Lines</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">${Math.floor((project.total_lines || 0) / 50)}</div>
+                            <div class="metric-label">Pages</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">${(project.languages || []).length}</div>
+                            <div class="metric-label">Languages</div>
+                        </div>
+                    </div>
+                    
+                    <div class="project-tech">
+                        ${techTags}
+                    </div>
+                    
+                    <div class="project-actions">
+                        <button class="btn btn-primary" onclick="event.stopPropagation(); analyzeProject('${project.id}')">
+                            <span>🔍</span> Analyze
+                        </button>
+                        <button class="btn btn-secondary" onclick="event.stopPropagation(); viewDetails('${project.id}')">
+                            <span>📊</span> Details
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Helper functions
+        function getStatusClass(status) {
+            switch (status?.toLowerCase()) {
+                case 'analyzed': return 'status-analyzed';
+                case 'pending': return 'status-pending';
+                case 'error': return 'status-error';
+                default: return 'status-pending';
+            }
+        }
+        
+        function formatNumber(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toLocaleString();
+        }
+        
+        // Project actions
+        function openProject(projectId) {
+            viewDetails(projectId);
+        }
+        
+        async function analyzeProject(projectId) {
+            try {
+                const response = await fetch(`${API_BASE}/projects/${projectId}/analyze`, {
+                    method: 'POST'
+                });
+                if (!response.ok) throw new Error('Analysis failed');
+                
+                // Refresh projects after analysis
+                await loadProjects();
+            } catch (error) {
+                console.error('Error analyzing project:', error);
+            }
+        }
+        
+        async function viewDetails(projectId) {
+            try {
+                currentProject = projects.find(p => p.id === projectId);
+                
+                // Load project details and security analysis
+                const [detailsResponse, securityResponse] = await Promise.all([
+                    fetch(`${API_BASE}/projects/${projectId}/details`),
+                    fetch(`${API_BASE}/projects/${projectId}/security`)
+                ]);
+                
+                if (!detailsResponse.ok) throw new Error('Failed to load project details');
+                if (!securityResponse.ok) throw new Error('Failed to load security analysis');
+                
+                currentProjectDetails = await detailsResponse.json();
+                currentProjectSecurity = await securityResponse.json();
+                
+                // Update modal title
+                modalTitle.textContent = currentProject.name;
+                
+                // Populate modal content
+                populateOverviewTab();
+                populateSecurityTab();
+                populateMcpTab();
+                
+                // Show modal
+                projectModal.classList.add('active');
+                
+            } catch (error) {
+                console.error('Error loading project details:', error);
+            }
+        }
+        
+        // Modal functions
+        function closeModal() {
+            projectModal.classList.remove('active');
+            currentProject = null;
+            currentProjectDetails = null;
+            currentProjectSecurity = null;
+        }
+        
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+        
+        // Populate tab content
+        function populateOverviewTab() {
+            const project = currentProjectDetails.project;
+            
+            // Project information
+            document.getElementById('projectInfoGrid').innerHTML = `
+                <div class="info-card">
+                    <div class="info-label">Status</div>
+                    <div class="info-value">${project.analysis_status}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Architecture</div>
+                    <div class="info-value">${project.architecture_type || 'Unknown'}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Total Files</div>
+                    <div class="info-value">${project.total_files.toLocaleString()}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Total Lines</div>
+                    <div class="info-value">${formatNumber(project.total_lines)}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Pages Read</div>
+                    <div class="info-value">${project.pages_read.toLocaleString()}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Last Analyzed</div>
+                    <div class="info-value">${project.last_analyzed ? new Date(project.last_analyzed).toLocaleDateString() : 'Never'}</div>
+                </div>
+            `;
+            
+            // Component statistics
+            const componentStats = currentProjectDetails.component_statistics;
+            document.getElementById('componentStatsGrid').innerHTML = Object.entries(componentStats).map(([type, count]) => `
+                <div class="info-card">
+                    <div class="info-label">${type.charAt(0).toUpperCase() + type.slice(1)}s</div>
+                    <div class="info-value">${count.toLocaleString()}</div>
+                </div>
+            `).join('');
+            
+            // Quality metrics
+            const quality = currentProjectDetails.quality_metrics;
+            document.getElementById('qualityMetricsGrid').innerHTML = `
+                <div class="info-card">
+                    <div class="info-label">Code Complexity</div>
+                    <div class="info-value">${quality.code_complexity}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Test Coverage</div>
+                    <div class="info-value">${quality.test_coverage}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Documentation</div>
+                    <div class="info-value">${quality.documentation_coverage}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Technical Debt</div>
+                    <div class="info-value">${quality.technical_debt}</div>
+                </div>
+            `;
+        }
+        
+        function populateSecurityTab() {
+            const security = currentProjectSecurity;
+            
+            // Security score
+            document.getElementById('securityScoreValue').textContent = security.overall_score;
+            
+            // Security metrics
+            const metrics = security.security_metrics;
+            document.getElementById('securityMetricsGrid').innerHTML = `
+                <div class="info-card">
+                    <div class="info-label">Total Vulnerabilities</div>
+                    <div class="info-value">${metrics.total_vulnerabilities}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Critical</div>
+                    <div class="info-value severity-critical" style="color: #ef4444">${metrics.critical}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">High</div>
+                    <div class="info-value severity-high" style="color: #fb923c">${metrics.high}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Medium</div>
+                    <div class="info-value severity-medium" style="color: #fbbf24">${metrics.medium}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Low</div>
+                    <div class="info-value severity-low" style="color: #22c55e">${metrics.low}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Security Hotspots</div>
+                    <div class="info-value">${metrics.security_hotspots}</div>
+                </div>
+            `;
+            
+            // Vulnerabilities
+            document.getElementById('vulnerabilitiesList').innerHTML = security.vulnerabilities.map(vuln => `
+                <div class="vulnerability-card">
+                    <div class="vulnerability-header">
+                        <div>
+                            <div class="vulnerability-title">${vuln.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</div>
+                            <div class="vulnerability-file">${vuln.file}:${vuln.line}</div>
+                        </div>
+                        <div class="severity-badge severity-${vuln.severity}">${vuln.severity}</div>
+                    </div>
+                    <div class="vulnerability-description">${vuln.description}</div>
+                    <div class="vulnerability-recommendation">
+                        <strong>Recommendation:</strong> ${vuln.recommendation}
+                    </div>
+                </div>
+            `).join('');
+            
+            // Recommendations
+            document.getElementById('securityRecommendations').innerHTML = security.recommendations.map(rec => `
+                <div class="info-card" style="margin-bottom: 0.5rem;">
+                    <div class="info-value" style="font-size: 0.9rem;">💡 ${rec}</div>
+                </div>
+            `).join('');
+        }
+        
+        function populateMcpTab() {
+            const mcp = currentProjectDetails.mcp_analysis;
+            
+            // MCP Analysis
+            document.getElementById('mcpAnalysisGrid').innerHTML = `
+                <div class="info-card">
+                    <div class="info-label">Files Processed</div>
+                    <div class="info-value">${mcp.files_processed.toLocaleString()}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Functions Extracted</div>
+                    <div class="info-value">${mcp.functions_extracted.toLocaleString()}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Classes Extracted</div>
+                    <div class="info-value">${mcp.classes_extracted.toLocaleString()}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Dependencies Mapped</div>
+                    <div class="info-value">${mcp.dependencies_mapped.toLocaleString()}</div>
+                </div>
+            `;
+            
+            // Processing statistics
+            const project = currentProjectDetails.project;
+            document.getElementById('processingStatsGrid').innerHTML = `
+                <div class="info-card">
+                    <div class="info-label">Languages Detected</div>
+                    <div class="info-value">${project.languages.length}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Frameworks Used</div>
+                    <div class="info-value">${project.frameworks.length}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Databases</div>
+                    <div class="info-value">${project.databases.length}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Build Tools</div>
+                    <div class="info-value">${project.build_tools.length}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Last Scan</div>
+                    <div class="info-value">${mcp.last_scan ? new Date(mcp.last_scan).toLocaleDateString() : 'Never'}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Processing Rate</div>
+                    <div class="info-value">${Math.round(project.total_lines / (mcp.files_processed || 1))} lines/file</div>
+                </div>
+            `;
+        }
+        
+        // Close modal when clicking outside
+        projectModal.addEventListener('click', (e) => {
+            if (e.target === projectModal) {
+                closeModal();
+            }
+        });
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && projectModal.classList.contains('active')) {
+                closeModal();
+            }
+        });
+        
+        // Render states
+        function renderEmptyState() {
+            projectsGrid.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">📂</div>
+                    <div class="empty-title">No projects found</div>
+                    <div class="empty-description">
+                        Start by analyzing your first project to see detailed insights and metrics.
+                    </div>
+                    <button class="btn btn-primary" onclick="window.location.href='/docs'">
+                        <span>📖</span> Learn How
+                    </button>
+                </div>
+            `;
+        }
+        
+        function renderError() {
+            projectsGrid.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">⚠️</div>
+                    <div class="empty-title">Error loading projects</div>
+                    <div class="empty-description">
+                        Unable to connect to the API. Please check your connection and try again.
+                    </div>
+                    <button class="btn btn-primary" onclick="loadProjects()">
+                        <span>🔄</span> Retry
+                    </button>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

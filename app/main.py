@@ -111,13 +111,25 @@ def create_app() -> FastAPI:
             {"request": request, "server_url": server_url}
         )
 
+    @app.get("/projects", response_class=HTMLResponse)
+    async def get_projects_dashboard(request: Request):
+        """Projects dashboard with beautiful UI."""
+        host = request.headers.get("host", "localhost:8000")
+        scheme = request.headers.get("x-forwarded-proto", "https" if "443" in host else "http")
+        server_url = f"{scheme}://{host}"
+        
+        return templates.TemplateResponse(
+            "projects_dashboard.html",
+            {"request": request, "server_url": server_url}
+        )
+
     @app.middleware("http")
     async def api_key_guard(request: Request, call_next):
         # Optional guard: enabled only when API_KEY is configured.
         if not settings.api_key:
             return await call_next(request)
 
-        public_paths = {"/health", "/docs", "/openapi.json", "/redoc", "/get-mcp-conf", "/mcp-config"}
+        public_paths = {"/health", "/docs", "/openapi.json", "/redoc", "/get-mcp-conf", "/mcp-config", "/projects"}
         if request.url.path in public_paths or request.url.path.startswith("/docs") or request.url.path.startswith("/mcp"):
             return await call_next(request)
 
