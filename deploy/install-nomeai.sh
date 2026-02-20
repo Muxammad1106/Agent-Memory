@@ -101,12 +101,12 @@ for i in {1..30}; do
 done
 
 # Download AI models
-log_info "Downloading AI models (this takes a while)..."
-for model in $OLLAMA_MODELS; do
-    log_info "Pulling $model..."
-    ollama pull $model || log_warn "Failed to pull $model"
-done
-log_success "Ollama ready"
+#log_info "Downloading AI models (this takes a while)..."
+#for model in $OLLAMA_MODELS; do
+#    log_info "Pulling $model..."
+#    ollama pull $model || log_warn "Failed to pull $model"
+#done
+#log_success "Ollama ready"
 
 #===============================================================================
 # Clone or update repository
