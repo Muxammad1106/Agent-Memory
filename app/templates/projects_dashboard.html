@@ -808,7 +808,8 @@
     </div>
 
     <script>
-        const API_BASE = "{{ server_url }}";
+        // Use current page's protocol and host for API requests
+        const API_BASE = window.location.protocol + "//" + window.location.host;
         
         // State management
         let projects = [];
