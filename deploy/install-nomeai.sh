@@ -11,7 +11,7 @@ set -e
 DOMAIN="mcp.nomeai.space"
 EMAIL="admin@nomeai.space"
 INSTALL_DIR="/opt/agent-memory"
-OLLAMA_MODELS="llama3.2:3b nomic-embed-text:latest"
+OLLAMA_MODELS="qwen2.5:7b nomic-embed-text:latest"
 
 # Colors
 RED='\033[0;31m'
@@ -147,7 +147,7 @@ REDIS_URL=redis://redis:6379/0
 OLLAMA_BASE_URL=http://host.docker.internal:11434
 
 LLM_PROVIDER=ollama
-LLM_MODEL=llama3.2:3b
+LLM_MODEL=qwen2.5:7b
 EMBEDDING_PROVIDER=ollama
 EMBEDDING_MODEL=nomic-embed-text
 
