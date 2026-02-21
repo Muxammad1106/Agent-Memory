@@ -820,6 +820,295 @@ class ProjectService:
         return results
 
 
+    # ─── Remote-first methods (no filesystem access needed) ───
+
+    async def push_files(
+        self,
+        project_id: str,
+        files: list[dict[str, Any]],
+        generate_embeddings: bool = True,
+    ) -> dict[str, Any]:
+        """Push file contents from remote client.
+
+        Each file dict: {path: str, content: str, language?: str}
+        Server stores in DB, extracts functions, generates embeddings.
+        No filesystem access required.
+        """
+        stmt = select(Project).where(Project.id == UUID(project_id))
+        result = await self.db.execute(stmt)
+        project = result.scalar_one_or_none()
+
+        if not project:
+            return {"error": f"Project {project_id} not found"}
+
+        project.analysis_status = "analyzing"
+        await self.db.flush()
+
+        stats = {
+            "files_pushed": 0,
+            "files_skipped": 0,
+            "functions_extracted": 0,
+            "total_lines": 0,
+            "languages": set(),
+            "errors": [],
+        }
+
+        for file_data in files:
+            rel_path = file_data.get("path", "")
+            content = file_data.get("content", "")
+            if not rel_path or content is None:
+                stats["files_skipped"] += 1
+                continue
+
+            ext = Path(rel_path).suffix.lower()
+            if ext not in CODE_EXTENSIONS:
+                stats["files_skipped"] += 1
+                continue
+
+            language = file_data.get("language") or LANG_BY_EXT.get(ext)
+
+            try:
+                file_record = await self._push_single_file(
+                    project=project,
+                    rel_path=rel_path,
+                    content=content,
+                    language=language,
+                    generate_embeddings=generate_embeddings,
+                )
+                if file_record:
+                    stats["files_pushed"] += 1
+                    stats["total_lines"] += file_record.line_count
+                    if file_record.language:
+                        stats["languages"].add(file_record.language)
+
+                    funcs = await self._extract_functions(
+                        project=project,
+                        file_record=file_record,
+                        generate_embeddings=generate_embeddings,
+                    )
+                    stats["functions_extracted"] += len(funcs)
+            except Exception as e:
+                stats["errors"].append(f"{rel_path}: {str(e)}")
+                logger.warning("Error pushing file %s: %s", rel_path, e)
+
+        # Recompute project-wide totals from DB
+        await self._recompute_project_stats(project)
+        await self.db.flush()
+
+        return {
+            "project_id": str(project.id),
+            "status": "ok",
+            "batch_stats": {
+                "files_pushed": stats["files_pushed"],
+                "files_skipped": stats["files_skipped"],
+                "functions_extracted": stats["functions_extracted"],
+                "lines_in_batch": stats["total_lines"],
+                "languages": list(stats["languages"]),
+                "errors_count": len(stats["errors"]),
+            },
+            "project_totals": {
+                "total_files": project.total_files,
+                "total_lines": project.total_lines,
+                "languages": project.languages,
+            },
+        }
+
+    async def push_structure(
+        self,
+        project_id: str,
+        *,
+        tech_stack: list[str] | None = None,
+        frameworks: list[str] | None = None,
+        languages: list[str] | None = None,
+        databases: list[str] | None = None,
+        build_tools: list[str] | None = None,
+        architecture_type: str | None = None,
+        description: str | None = None,
+        modules: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        """Push project structure/metadata from remote client.
+
+        Client analyses its local project and sends metadata.
+        No filesystem access required on server side.
+        """
+        stmt = select(Project).where(Project.id == UUID(project_id))
+        result = await self.db.execute(stmt)
+        project = result.scalar_one_or_none()
+
+        if not project:
+            return {"error": f"Project {project_id} not found"}
+
+        if tech_stack is not None:
+            project.tech_stack = tech_stack
+        if frameworks is not None:
+            project.frameworks = frameworks
+        if languages is not None:
+            project.languages = languages
+        if databases is not None:
+            project.databases = databases
+        if build_tools is not None:
+            project.build_tools = build_tools
+        if architecture_type is not None:
+            project.architecture_type = architecture_type
+        if description is not None:
+            project.description = description
+
+        # Create modules if provided
+        modules_created = 0
+        if modules:
+            for mod in modules:
+                mod_name = mod.get("name", "")
+                if not mod_name:
+                    continue
+                # Upsert: skip if exists
+                existing = await self.db.execute(
+                    select(ProjectModule).where(
+                        ProjectModule.project_id == project.id,
+                        ProjectModule.name == mod_name,
+                    )
+                )
+                if existing.scalar_one_or_none():
+                    continue
+                m = ProjectModule(
+                    project_id=project.id,
+                    name=mod_name,
+                    module_type=mod.get("type", "shared"),
+                    path=mod.get("path", mod_name),
+                    tech_stack=mod.get("tech_stack", []),
+                    frameworks=mod.get("frameworks", []),
+                    languages=mod.get("languages", []),
+                )
+                self.db.add(m)
+                modules_created += 1
+
+        project.analysis_status = "completed"
+        project.last_analyzed = datetime.now(timezone.utc)
+        await self.db.flush()
+
+        return {
+            "project_id": str(project.id),
+            "status": "ok",
+            "modules_created": modules_created,
+            "message": "Project structure updated",
+        }
+
+    async def finalize_push(self, project_id: str) -> dict[str, Any]:
+        """Mark push-based indexing as completed and recompute stats."""
+        stmt = select(Project).where(Project.id == UUID(project_id))
+        result = await self.db.execute(stmt)
+        project = result.scalar_one_or_none()
+
+        if not project:
+            return {"error": f"Project {project_id} not found"}
+
+        await self._recompute_project_stats(project)
+        project.analysis_status = "completed"
+        project.last_analyzed = datetime.now(timezone.utc)
+        await self.db.flush()
+
+        return {
+            "project_id": str(project.id),
+            "status": "completed",
+            "total_files": project.total_files,
+            "total_lines": project.total_lines,
+            "languages": project.languages,
+        }
+
+    async def _push_single_file(
+        self,
+        project: Project,
+        rel_path: str,
+        content: str,
+        language: str | None,
+        generate_embeddings: bool,
+    ) -> ProjectFile | None:
+        """Store a single file from pushed content (no filesystem access)."""
+        ext = Path(rel_path).suffix.lower()
+        lines = content.count("\n") + 1
+        content_hash = hashlib.sha256(content.encode()).hexdigest()
+
+        # Check if already indexed with same hash
+        stmt = select(ProjectFile).where(
+            and_(
+                ProjectFile.project_id == project.id,
+                ProjectFile.relative_path == rel_path,
+            )
+        )
+        result = await self.db.execute(stmt)
+        existing = result.scalar_one_or_none()
+
+        if existing and existing.content_hash == content_hash:
+            return existing  # unchanged
+
+        imports = self._extract_imports(content, language)
+
+        if existing:
+            file_record = existing
+            file_record.content = content
+            file_record.content_hash = content_hash
+            file_record.line_count = lines
+            file_record.size_bytes = len(content.encode())
+            file_record.language = language
+            file_record.imports = imports
+            file_record.last_indexed = datetime.now(timezone.utc)
+        else:
+            file_record = ProjectFile(
+                project_id=project.id,
+                name=Path(rel_path).name,
+                path=rel_path,
+                relative_path=rel_path,
+                language=language,
+                file_extension=ext,
+                content=content,
+                content_hash=content_hash,
+                size_bytes=len(content.encode()),
+                line_count=lines,
+                imports=imports,
+                last_indexed=datetime.now(timezone.utc),
+            )
+            self.db.add(file_record)
+
+        if generate_embeddings and content:
+            try:
+                embed_text = f"{rel_path}\n{content[:2000]}"
+                embedding = await self.embedding_provider.embed(embed_text)
+                file_record.embedding = embedding
+            except Exception as e:
+                logger.warning("Embedding failed for %s: %s", rel_path, e)
+
+        await self.db.flush()
+        return file_record
+
+    async def _recompute_project_stats(self, project: Project) -> None:
+        """Recompute project-wide stats from project_files table."""
+        from sqlalchemy import func as sa_func
+
+        row = (
+            await self.db.execute(
+                select(
+                    sa_func.count(ProjectFile.id),
+                    sa_func.coalesce(sa_func.sum(ProjectFile.line_count), 0),
+                ).where(ProjectFile.project_id == project.id)
+            )
+        ).one()
+
+        project.total_files = row[0]
+        project.total_lines = row[1]
+
+        # Collect unique languages
+        lang_rows = (
+            await self.db.execute(
+                select(ProjectFile.language)
+                .where(
+                    ProjectFile.project_id == project.id,
+                    ProjectFile.language.isnot(None),
+                )
+                .distinct()
+            )
+        ).scalars().all()
+        project.languages = [l for l in lang_rows if l]
+
+
 class IDESessionService:
     """Service for IDE session tracking."""
 

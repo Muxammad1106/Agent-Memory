@@ -636,51 +636,94 @@ async def analyze_project(
 ) -> Any:
     """When to use:
     Ingest or refresh project structure in Postgres.
+    Works in two modes:
+    - LOCAL: If project_path is accessible on the server filesystem, indexes directly.
+    - REMOTE: If path is not accessible (remote MCP), creates the project record and
+      returns instructions to use project_push_files for remote indexing.
 
     Inputs:
-    - project_path: Filesystem path to project root.
+    - project_path: Filesystem path to project root (on your local machine).
     - project_name: Optional display name.
     - force_reindex: Rebuild existing project records.
 
     Returns:
     - project_id, analysis status/timestamp, summary, metadata.
+    - If remote mode: instructions to use project_push_files workflow.
 
     Common mistakes:
     - Skipping analysis and expecting graph tools to work on an unknown project.
     """
-    from app.indexing import ProjectIndexer
+    import os
+    from app.paths import resolve_project_path
+    from app.services.project_service import ProjectService
 
-    factory = _get_session_factory()
-    async with factory() as db:
-        indexer = ProjectIndexer(db)
-        project = await indexer.index_project(
-            project_path=project_path,
-            project_name=project_name,
-            force_reindex=force_reindex,
-        )
-        context = await _get_active_mcp_context()
-        context["project_id"] = str(project.id)
-        await _set_active_mcp_context(context)
-        summary = await indexer.get_project_summary(str(project.id))
-        return {
-            "project_id": str(project.id),
-            "project_name": project.name,
-            "analysis_status": project.analysis_status,
-            "analysis_timestamp": project.last_analyzed.isoformat()
-            if project.last_analyzed
-            else "",
-            "summary": summary,
-            "metadata": {
-                "total_files": project.total_files,
-                "total_lines": project.total_lines,
-                "architecture_type": project.architecture_type,
-                "tech_stack": project.tech_stack,
-                "frameworks": project.frameworks,
-                "languages": project.languages,
-                "databases": project.databases,
-                "build_tools": project.build_tools,
-            },
-        }
+    resolved = resolve_project_path(project_path)
+    is_local = resolved.resolved_path.exists() and resolved.resolved_path.is_dir()
+
+    if is_local:
+        # LOCAL mode: filesystem accessible, use full indexer
+        from app.indexing import ProjectIndexer
+
+        factory = _get_session_factory()
+        async with factory() as db:
+            indexer = ProjectIndexer(db)
+            project = await indexer.index_project(
+                project_path=project_path,
+                project_name=project_name,
+                force_reindex=force_reindex,
+            )
+            ctx = await _get_active_mcp_context()
+            ctx["project_id"] = str(project.id)
+            await _set_active_mcp_context(ctx)
+            summary = await indexer.get_project_summary(str(project.id))
+            return {
+                "project_id": str(project.id),
+                "project_name": project.name,
+                "analysis_status": project.analysis_status,
+                "analysis_timestamp": project.last_analyzed.isoformat()
+                if project.last_analyzed
+                else "",
+                "summary": summary,
+                "metadata": {
+                    "total_files": project.total_files,
+                    "total_lines": project.total_lines,
+                    "architecture_type": project.architecture_type,
+                    "tech_stack": project.tech_stack,
+                    "frameworks": project.frameworks,
+                    "languages": project.languages,
+                    "databases": project.databases,
+                    "build_tools": project.build_tools,
+                },
+            }
+    else:
+        # REMOTE mode: path not accessible, create record and guide client
+        factory = _get_session_factory()
+        async with factory() as db:
+            svc = ProjectService(db)
+            result = await svc.create_project(
+                name=project_name or os.path.basename(project_path.rstrip("/ ")),
+                path=project_path,
+            )
+            await db.commit()
+
+            pid = result.get("project_id", "")
+            ctx = await _get_active_mcp_context()
+            ctx["project_id"] = pid
+            await _set_active_mcp_context(ctx)
+
+            return {
+                "project_id": pid,
+                "project_name": result.get("name", ""),
+                "analysis_status": "pending_remote_push",
+                "mode": "remote",
+                "message": (
+                    "Project path is not accessible on the MCP server filesystem. "
+                    "Project record created. To index your project remotely, use these tools:\n"
+                    "1. project_push_files(files=[{path, content}, ...]) — send file batches (10-30 files each)\n"
+                    "2. project_push_structure(tech_stack, frameworks, ...) — send project metadata\n"
+                    "3. project_finalize_push() — finalize indexing"
+                ),
+            }
 
 
 @mcp.tool(name="project_list")
@@ -1067,6 +1110,149 @@ async def full_index_project(
             generate_embeddings=generate_embeddings,
             max_file_size=max_file_size,
         )
+        await db.commit()
+        return result
+
+
+@mcp.tool(name="project_push_files")
+async def push_project_files(
+    project_id: str | None = None,
+    files: list[dict] | None = None,
+    generate_embeddings: bool = True,
+) -> Any:
+    """When to use:
+    Push file contents from your local machine to the remote MCP server for indexing.
+    Use this instead of project_full_index when the MCP server cannot access your filesystem
+    (i.e., remote/cloud MCP). The IDE reads files locally and sends content via this tool.
+
+    Inputs:
+    - project_id: Optional; auto-filled from context.
+    - files: List of file dicts, each with {path: str, content: str, language?: str}.
+      Send files in batches of 10-30 at a time to avoid timeouts.
+    - generate_embeddings: Generate semantic embeddings (default true).
+
+    Returns:
+    - Batch stats and updated project totals.
+
+    Typical workflow:
+    1. project_create(name, path)
+    2. project_push_files(files=[...])  ← repeat in batches
+    3. project_push_structure(tech_stack, frameworks, ...)
+    4. project_finalize_push()
+
+    Common mistakes:
+    - Sending too many files at once (keep batches under 30 files).
+    - Forgetting to call project_create first.
+    - Sending binary files (only send text/code files).
+    """
+    from app.services.project_service import ProjectService
+
+    context = await _get_active_mcp_context()
+    effective_project_id = project_id or context.get("project_id")
+    if not effective_project_id:
+        return {"error": "project_id is required (pass explicitly or set via context_set/project_create)"}
+    if not files:
+        return {"error": "files list is required. Each item: {path: str, content: str, language?: str}"}
+
+    factory = _get_session_factory()
+    async with factory() as db:
+        svc = ProjectService(db)
+        result = await svc.push_files(
+            project_id=effective_project_id,
+            files=files,
+            generate_embeddings=generate_embeddings,
+        )
+        await db.commit()
+        return result
+
+
+@mcp.tool(name="project_push_structure")
+async def push_project_structure(
+    project_id: str | None = None,
+    tech_stack: list[str] | None = None,
+    frameworks: list[str] | None = None,
+    languages: list[str] | None = None,
+    databases: list[str] | None = None,
+    build_tools: list[str] | None = None,
+    architecture_type: str | None = None,
+    description: str | None = None,
+    modules: list[dict] | None = None,
+) -> Any:
+    """When to use:
+    Push project metadata and structure from your local analysis.
+    The IDE analyses the local project and sends metadata to the remote MCP server.
+    No filesystem access required on the server.
+
+    Inputs:
+    - project_id: Optional; auto-filled from context.
+    - tech_stack: e.g. ["node", "docker"].
+    - frameworks: e.g. ["react", "fastapi", "express"].
+    - languages: e.g. ["python", "typescript"].
+    - databases: e.g. ["postgresql", "redis"].
+    - build_tools: e.g. ["docker", "webpack"].
+    - architecture_type: e.g. "monolith", "microservices", "monorepo".
+    - description: Free-text project description.
+    - modules: List of module dicts [{name, type, path, tech_stack?, frameworks?, languages?}].
+
+    Returns:
+    - Confirmation with modules created count.
+
+    Common mistakes:
+    - Not calling project_create first.
+    """
+    from app.services.project_service import ProjectService
+
+    context = await _get_active_mcp_context()
+    effective_project_id = project_id or context.get("project_id")
+    if not effective_project_id:
+        return {"error": "project_id is required (pass explicitly or set via context_set/project_create)"}
+
+    factory = _get_session_factory()
+    async with factory() as db:
+        svc = ProjectService(db)
+        result = await svc.push_structure(
+            project_id=effective_project_id,
+            tech_stack=tech_stack,
+            frameworks=frameworks,
+            languages=languages,
+            databases=databases,
+            build_tools=build_tools,
+            architecture_type=architecture_type,
+            description=description,
+            modules=modules,
+        )
+        await db.commit()
+        return result
+
+
+@mcp.tool(name="project_finalize_push")
+async def finalize_project_push(
+    project_id: str | None = None,
+) -> Any:
+    """When to use:
+    Call after all project_push_files batches are sent to finalize indexing.
+    Recomputes project stats and marks analysis as completed.
+
+    Inputs:
+    - project_id: Optional; auto-filled from context.
+
+    Returns:
+    - Final project stats (total_files, total_lines, languages).
+
+    Common mistakes:
+    - Calling before all file batches are pushed.
+    """
+    from app.services.project_service import ProjectService
+
+    context = await _get_active_mcp_context()
+    effective_project_id = project_id or context.get("project_id")
+    if not effective_project_id:
+        return {"error": "project_id is required (pass explicitly or set via context_set/project_create)"}
+
+    factory = _get_session_factory()
+    async with factory() as db:
+        svc = ProjectService(db)
+        result = await svc.finalize_push(project_id=effective_project_id)
         await db.commit()
         return result
 
