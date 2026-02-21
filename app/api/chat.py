@@ -154,65 +154,72 @@ async def _stream_ollama(
 
 
 @router.post("/stream")
-async def chat_stream(
-    body: ChatRequest,
-    db: AsyncSession = Depends(get_db),
-    svc: MemoryService = Depends(_get_memory_service),
-):
-    """Stream chat response with memory and project context pipeline."""
+async def chat_stream(body: ChatRequest):
+    """Stream chat response with memory and project context pipeline.
+
+    NOTE: We do NOT use Depends(get_db) here because FastAPI closes
+    dependency-injected sessions when the handler returns, but
+    StreamingResponse keeps the generator running after that.
+    Instead we create our own session inside the generator.
+    """
+    from app.db.session import _get_session_factory
 
     async def event_generator():
         full_response = ""
+        factory = _get_session_factory()
 
-        # Phase 1: Memory search
-        memory_context = ""
-        if body.use_memory:
-            yield f"data: {json.dumps({'type': 'status', 'content': 'Searching memory...'})}\n\n"
-            memory_context = await _search_memory_context(svc, body.message)
+        async with factory() as db:
+            svc = MemoryService(db)
 
-        # Phase 2: Project context search
-        project_context = ""
-        if body.use_project_context and body.project_id:
-            yield f"data: {json.dumps({'type': 'status', 'content': 'Searching project...'})}\n\n"
-            project_context = await _search_project_context(db, body.project_id, body.message)
+            # Phase 1: Memory search
+            memory_context = ""
+            if body.use_memory:
+                yield f"data: {json.dumps({'type': 'status', 'content': 'Searching memory...'})}\n\n"
+                memory_context = await _search_memory_context(svc, body.message)
 
-        # Phase 3: Build prompt and stream from Ollama
-        yield f"data: {json.dumps({'type': 'status', 'content': 'Generating...'})}\n\n"
+            # Phase 2: Project context search
+            project_context = ""
+            if body.use_project_context and body.project_id:
+                yield f"data: {json.dumps({'type': 'status', 'content': 'Searching project...'})}\n\n"
+                project_context = await _search_project_context(db, body.project_id, body.message)
 
-        system_prompt = _build_system_prompt(memory_context, project_context)
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": body.message},
-        ]
+            # Phase 3: Build prompt and stream from Ollama
+            yield f"data: {json.dumps({'type': 'status', 'content': 'Generating...'})}\n\n"
 
-        try:
-            async for token in _stream_ollama(
-                model=body.model,
-                messages=messages,
-                temperature=body.temperature,
-                max_tokens=body.max_tokens,
-                images=body.images,
-            ):
-                full_response += token
-                yield f"data: {json.dumps({'type': 'token', 'content': token})}\n\n"
-        except Exception as e:
-            logger.error("Ollama streaming error: %s", e)
-            yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
-            return
+            system_prompt = _build_system_prompt(memory_context, project_context)
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": body.message},
+            ]
 
-        # Phase 4: Save to memory
-        if body.use_memory and full_response:
             try:
-                await svc.store(
-                    content=f"Q: {body.message}\nA: {full_response[:500]}",
-                    memory_type="episode",
-                    metadata={"project_id": body.project_id, "session_id": body.session_id},
-                    importance=3,
-                )
+                async for token in _stream_ollama(
+                    model=body.model,
+                    messages=messages,
+                    temperature=body.temperature,
+                    max_tokens=body.max_tokens,
+                ):
+                    full_response += token
+                    yield f"data: {json.dumps({'type': 'token', 'content': token})}\n\n"
             except Exception as e:
-                logger.warning("Failed to store chat memory: %s", e)
+                logger.error("Ollama streaming error: %s", e)
+                yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
+                return
 
-        yield f"data: {json.dumps({'type': 'done', 'content': ''})}\n\n"
+            # Phase 4: Save to memory
+            if body.use_memory and full_response:
+                try:
+                    await svc.store(
+                        content=f"Q: {body.message}\nA: {full_response[:500]}",
+                        memory_type="episode",
+                        metadata={"project_id": body.project_id, "session_id": body.session_id},
+                        importance=3,
+                    )
+                    await db.commit()
+                except Exception as e:
+                    logger.warning("Failed to store chat memory: %s", e)
+
+            yield f"data: {json.dumps({'type': 'done', 'content': ''})}\n\n"
 
     return StreamingResponse(
         event_generator(),
