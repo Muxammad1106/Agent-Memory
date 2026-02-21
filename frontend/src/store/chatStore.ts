@@ -51,7 +51,7 @@ interface ChatState {
 }
 
 const DEFAULT_SETTINGS: ModelSettings = {
-  model: "llama3.2",
+  model: "qwen2.5:1.5b",
   temperature: 0.7,
   maxTokens: 4096,
   useMemory: true,

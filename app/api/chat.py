@@ -28,7 +28,7 @@ class ChatRequest(BaseModel):
     message: str = Field(..., description="User message")
     project_id: Optional[str] = Field(None, description="Project ID for context")
     session_id: Optional[str] = Field(None, description="Session ID for continuity")
-    model: str = Field("qwen2.5:7b", description="Model name")
+    model: str = Field("qwen2.5:1.5b", description="Model name")
     temperature: float = Field(0.7, description="Temperature")
     max_tokens: int = Field(4096, description="Max tokens")
     use_memory: bool = Field(True, description="Use memory search")

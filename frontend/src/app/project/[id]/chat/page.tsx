@@ -187,29 +187,29 @@ export default function ChatPage() {
       <Sidebar />
 
       {/* Chat sidebar */}
-      <div className="flex w-60 flex-col border-r border-border bg-card/30">
-        <div className="flex items-center justify-between border-b border-border p-3">
-          <h2 className="text-xs font-semibold">Chats</h2>
+      <div className="glass-subtle flex w-52 flex-col">
+        <div className="flex items-center justify-between border-b border-white/[0.04] p-3">
+          <h2 className="text-[11px] font-medium text-white/40">Chats</h2>
           <button
             onClick={createNewSession}
-            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="rounded-md p-1 text-white/20 transition-all hover:bg-white/[0.06] hover:text-white/50"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-3.5 w-3.5" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-2">
+        <div className="flex-1 overflow-y-auto p-1.5">
           {sessions.map((s) => (
             <div
               key={s.id}
-              className={`group mb-1 flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-xs transition-colors ${
+              className={`group mb-0.5 flex cursor-pointer items-center justify-between rounded-md px-2.5 py-1.5 text-[11px] transition-all ${
                 s.id === currentSessionId
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "bg-white/[0.06] text-white/70"
+                  : "text-white/25 hover:bg-white/[0.03] hover:text-white/50"
               }`}
               onClick={() => setCurrentSession(s.id)}
             >
               <div className="flex items-center gap-2 truncate">
-                <MessageSquare className="h-3.5 w-3.5 shrink-0" />
+                <MessageSquare className="h-3 w-3 shrink-0" />
                 <span className="truncate">{s.title}</span>
               </div>
               <button
@@ -217,14 +217,14 @@ export default function ChatPage() {
                   e.stopPropagation();
                   deleteSession(s.id);
                 }}
-                className="shrink-0 rounded p-1 opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+                className="shrink-0 rounded p-0.5 opacity-0 transition-all hover:bg-red-500/10 hover:text-red-400/70 group-hover:opacity-100"
               >
-                <Trash2 className="h-3 w-3" />
+                <Trash2 className="h-2.5 w-2.5" />
               </button>
             </div>
           ))}
           {sessions.length === 0 && (
-            <p className="px-3 py-4 text-center text-[10px] text-muted-foreground">
+            <p className="px-2 py-6 text-center text-[9px] text-white/15">
               No chats yet. Click + to start.
             </p>
           )}
@@ -234,20 +234,20 @@ export default function ChatPage() {
       {/* Main chat area */}
       <div className="flex flex-1 flex-col">
         {/* Top bar */}
-        <div className="flex items-center justify-between border-b border-border px-4 py-2">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between border-b border-white/[0.04] bg-black/40 px-4 py-2 backdrop-blur-xl">
+          <div className="flex items-center gap-2.5">
             <button
               onClick={() => router.push(`/project/${projectId}`)}
-              className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="rounded-md p-1 text-white/20 transition-all hover:bg-white/[0.06] hover:text-white/50"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-3.5 w-3.5" />
             </button>
-            <span className="text-sm font-medium">
+            <span className="text-[12px] font-medium text-white/60">
               {currentSession?.title || "New Chat"}
             </span>
             {streamingStatus && (
-              <span className="flex items-center gap-1.5 text-xs text-primary">
-                <Loader2 className="h-3 w-3 animate-spin" />
+              <span className="flex items-center gap-1 text-[9px] text-white/30">
+                <Loader2 className="h-2.5 w-2.5 animate-spin" />
                 {streamingStatus}
               </span>
             )}
@@ -266,25 +266,24 @@ export default function ChatPage() {
           onDrop={handleDrop}
         >
           {dragOver && (
-            <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-              <div className="flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-primary p-8">
-                <ImageIcon className="h-8 w-8 text-primary" />
-                <p className="text-sm text-primary">Drop image here</p>
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+              <div className="glass flex flex-col items-center gap-2 rounded-xl p-6">
+                <ImageIcon className="h-6 w-6 text-white/40" />
+                <p className="text-[11px] text-white/40">Drop image here</p>
               </div>
             </div>
           )}
 
           {messages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-4 px-8 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-                <MessageSquare className="h-8 w-8 text-primary" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/[0.04]">
+                <MessageSquare className="h-6 w-6 text-white/20" />
               </div>
-              <h2 className="text-lg font-semibold">Start a conversation</h2>
-              <p className="max-w-md text-sm text-muted-foreground">
-                Ask questions about your project, search code, get recommendations,
-                or discuss architecture decisions.
+              <h2 className="text-sm font-medium text-white/60">Start a conversation</h2>
+              <p className="max-w-sm text-[11px] text-white/20">
+                Ask about your project, search code, or discuss architecture.
               </p>
-              <div className="flex flex-wrap justify-center gap-2">
+              <div className="flex flex-wrap justify-center gap-1.5">
                 {[
                   "Explain the project structure",
                   "Find security issues",
@@ -297,7 +296,7 @@ export default function ChatPage() {
                       setInput(q);
                       textareaRef.current?.focus();
                     }}
-                    className="rounded-xl border border-border bg-card/50 px-4 py-2 text-xs text-muted-foreground transition-colors hover:border-primary/30 hover:text-foreground"
+                    className="glass glass-hover rounded-lg px-3 py-1.5 text-[10px] text-white/25 transition-all hover:text-white/50"
                   >
                     {q}
                   </button>
@@ -305,7 +304,7 @@ export default function ChatPage() {
               </div>
             </div>
           ) : (
-            <div className="divide-y divide-border/50">
+            <div className="divide-y divide-white/[0.02]">
               {messages.map((msg) => (
                 <ChatMessage key={msg.id} message={msg} />
               ))}
@@ -316,19 +315,19 @@ export default function ChatPage() {
 
         {/* Image previews */}
         {images.length > 0 && (
-          <div className="flex gap-2 border-t border-border px-4 py-2">
+          <div className="flex gap-2 border-t border-white/[0.04] px-4 py-2">
             {images.map((img, i) => (
               <div key={i} className="relative">
                 <img
                   src={`data:image/png;base64,${img}`}
                   alt="upload"
-                  className="h-16 w-16 rounded-lg object-cover"
+                  className="h-12 w-12 rounded-md object-cover opacity-80"
                 />
                 <button
                   onClick={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}
-                  className="absolute -right-1 -top-1 rounded-full bg-destructive p-0.5 text-destructive-foreground"
+                  className="absolute -right-1 -top-1 rounded-full bg-red-500/80 p-0.5"
                 >
-                  <Trash2 className="h-3 w-3" />
+                  <Trash2 className="h-2.5 w-2.5 text-white" />
                 </button>
               </div>
             ))}
@@ -336,18 +335,8 @@ export default function ChatPage() {
         )}
 
         {/* Input */}
-        <div className="border-t border-border p-4">
-          <div className="flex items-end gap-3">
-            <label className="cursor-pointer rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-              <ImageIcon className="h-5 w-5" />
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={(e) => handleImageUpload(e.target.files)}
-              />
-            </label>
+        <div className="border-t border-white/[0.04] p-3">
+          <div className="flex items-end gap-2">
             <div className="relative flex-1">
               <textarea
                 ref={textareaRef}
@@ -360,18 +349,18 @@ export default function ChatPage() {
                 onKeyDown={handleKeyDown}
                 placeholder="Ask about your project... (Cmd+Enter to send)"
                 rows={1}
-                className="w-full resize-none rounded-xl border border-border bg-muted/50 px-4 py-3 pr-12 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+                className="w-full resize-none rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-[13px] text-white/70 outline-none transition-all placeholder:text-white/15 focus:border-white/[0.12] focus:bg-white/[0.05]"
               />
             </div>
             <button
               onClick={handleSend}
               disabled={!input.trim() || isStreaming}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/90 text-black transition-all hover:bg-white disabled:opacity-30"
             >
               {isStreaming ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
-                <Send className="h-4 w-4" />
+                <Send className="h-3.5 w-3.5" />
               )}
             </button>
           </div>

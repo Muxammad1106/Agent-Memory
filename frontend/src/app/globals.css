@@ -4,23 +4,23 @@
 
 @layer base {
   :root {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 96%;
-    --card: 222 47% 8%;
-    --card-foreground: 210 40% 96%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 6%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 96%;
-    --muted: 217 33% 14%;
-    --muted-foreground: 215 20% 55%;
-    --accent: 217 91% 60%;
-    --accent-foreground: 222 47% 6%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 217 91% 60%;
+    --background: 0 0% 3%;
+    --foreground: 0 0% 93%;
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 93%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 3%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 93%;
+    --muted: 0 0% 9%;
+    --muted-foreground: 0 0% 50%;
+    --accent: 0 0% 14%;
+    --accent-foreground: 0 0% 93%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 12%;
+    --input: 0 0% 12%;
+    --ring: 0 0% 40%;
     --radius: 0.75rem;
   }
 }
@@ -37,33 +37,45 @@
 
 /* Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: hsl(222 47% 6%);
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: hsl(217 33% 22%);
-  border-radius: 3px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(217 33% 30%);
+  background: rgba(255,255,255,0.15);
 }
 
 /* Code highlight overrides */
 pre code.hljs {
-  background: hsl(222 47% 8%) !important;
-  border-radius: 0.5rem;
+  background: rgba(255,255,255,0.03) !important;
+  border-radius: 0.75rem;
   padding: 1rem !important;
 }
 
-/* Glassmorphism utility */
+/* Glass panels */
 .glass {
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(56, 97, 251, 0.15);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.glass-subtle {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.glass-hover:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.10);
 }
 
 /* Typing animation */
@@ -74,7 +86,7 @@ pre code.hljs {
 .typing-cursor::after {
   content: '▊';
   animation: blink 1s step-end infinite;
-  color: hsl(217 91% 60%);
+  color: rgba(255,255,255,0.5);
 }
 
 /* Skeleton shimmer */
@@ -83,8 +95,16 @@ pre code.hljs {
   100% { background-position: 200% 0; }
 }
 .skeleton {
-  background: linear-gradient(90deg, hsl(217 33% 14%) 25%, hsl(217 33% 20%) 50%, hsl(217 33% 14%) 75%);
+  background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
+}
+
+/* Glow effects */
+.glow-sm {
+  box-shadow: 0 0 15px -3px rgba(255,255,255,0.05);
+}
+.glow-active {
+  box-shadow: 0 0 20px -5px rgba(255,255,255,0.1);
 }

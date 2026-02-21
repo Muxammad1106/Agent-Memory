@@ -62,22 +62,20 @@ export default function DashboardPage() {
       <Sidebar />
       <main className="flex-1 overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-sm">
+        <div className="sticky top-0 z-10 border-b border-white/[0.04] bg-black/60 backdrop-blur-xl">
           <div className="flex items-center justify-between px-8 py-4">
             <div>
-              <h1 className="text-xl font-bold">Dashboard</h1>
-              <p className="text-sm text-muted-foreground">
+              <h1 className="text-lg font-semibold tracking-tight text-white/90">Dashboard</h1>
+              <p className="text-[11px] text-white/30">
                 {projects.length} projects indexed
               </p>
             </div>
             <button
               onClick={handleRefresh}
               disabled={refreshing}
-              className="flex items-center gap-2 rounded-xl bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.04] px-3 py-1.5 text-[11px] text-white/50 transition-all hover:bg-white/[0.08] hover:text-white/70 disabled:opacity-40"
             >
-              <RefreshCw
-                className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
-              />
+              <RefreshCw className={`h-3 w-3 ${refreshing ? "animate-spin" : ""}`} />
               Refresh
             </button>
           </div>
@@ -85,24 +83,24 @@ export default function DashboardPage() {
 
         <div className="p-8">
           {/* Stats */}
-          <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard
-              icon={<FolderOpen className="h-5 w-5 text-primary" />}
+              icon={<FolderOpen className="h-4 w-4 text-white/50" />}
               label="Projects"
               value={projects.length.toString()}
             />
             <StatCard
-              icon={<FileCode className="h-5 w-5 text-green-400" />}
+              icon={<FileCode className="h-4 w-4 text-white/50" />}
               label="Total Files"
               value={totalFiles.toLocaleString()}
             />
             <StatCard
-              icon={<Code2 className="h-5 w-5 text-yellow-400" />}
+              icon={<Code2 className="h-4 w-4 text-white/50" />}
               label="Total Lines"
               value={totalLines.toLocaleString()}
             />
             <StatCard
-              icon={<Activity className="h-5 w-5 text-purple-400" />}
+              icon={<Activity className="h-4 w-4 text-white/50" />}
               label="Services"
               value={Object.values(healthStatus).filter((s) => s === "healthy").length + "/" + Object.keys(healthStatus).length}
             />
@@ -111,15 +109,15 @@ export default function DashboardPage() {
           {/* Service Health */}
           {Object.keys(healthStatus).length > 0 && (
             <div className="mb-8">
-              <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Service Health</h2>
+              <h2 className="mb-3 text-[11px] font-medium uppercase tracking-widest text-white/20">Service Health</h2>
               <div className="flex flex-wrap gap-2">
                 {Object.entries(healthStatus).map(([name, status]) => (
                   <span
                     key={name}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-medium ${
+                    className={`rounded-md px-2.5 py-1 text-[10px] font-medium ${
                       status === "healthy"
-                        ? "bg-green-500/10 text-green-400"
-                        : "bg-destructive/10 text-destructive"
+                        ? "bg-emerald-500/10 text-emerald-400/80"
+                        : "bg-red-500/10 text-red-400/80"
                     }`}
                   >
                     {name}: {typeof status === "string" ? status : "healthy"}
@@ -131,22 +129,22 @@ export default function DashboardPage() {
 
           {/* Projects Grid */}
           {loading ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="skeleton h-56 rounded-2xl" />
+                <div key={i} className="skeleton h-48 rounded-xl" />
               ))}
             </div>
           ) : displayed.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {displayed.map((project) => (
                 <ProjectCard key={project.id} project={project} />
               ))}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <FolderOpen className="mb-4 h-12 w-12 text-muted-foreground/50" />
-              <h3 className="text-lg font-medium">No projects found</h3>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <FolderOpen className="mb-4 h-10 w-10 text-white/10" />
+              <h3 className="text-sm font-medium text-white/50">No projects found</h3>
+              <p className="mt-1 text-[11px] text-white/25">
                 Analyze a project through MCP to see it here
               </p>
             </div>
@@ -167,12 +165,12 @@ function StatCard({
   value: string;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-card/50 p-5">
-      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-muted">
+    <div className="glass rounded-xl p-4">
+      <div className="mb-2.5 flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.04]">
         {icon}
       </div>
-      <p className="text-2xl font-bold">{value}</p>
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-xl font-semibold tracking-tight text-white/90">{value}</p>
+      <p className="text-[10px] text-white/30">{label}</p>
     </div>
   );
 }

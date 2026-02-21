@@ -70,40 +70,40 @@ export default function ProjectPage() {
       <Sidebar />
       <main className="flex-1 overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-sm">
-          <div className="flex items-center justify-between px-8 py-4">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push("/dashboard")}
-                className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </button>
-              <div>
-                <h1 className="text-xl font-bold">{project?.name || "Loading..."}</h1>
-                <p className="text-xs text-muted-foreground">{project?.path}</p>
-              </div>
-            </div>
+        <div className="sticky top-0 z-10 border-b border-white/[0.04] bg-black/60 backdrop-blur-xl">
+          <div className="flex items-center justify-between px-8 py-3">
             <div className="flex items-center gap-3">
               <button
-                onClick={fetchProject}
-                className="flex items-center gap-2 rounded-xl bg-muted px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+                onClick={() => router.push("/dashboard")}
+                className="rounded-md p-1.5 text-white/20 transition-all hover:bg-white/[0.06] hover:text-white/50"
               >
-                <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+                <ArrowLeft className="h-3.5 w-3.5" />
+              </button>
+              <div>
+                <h1 className="text-[15px] font-semibold tracking-tight text-white/90">{project?.name || "Loading..."}</h1>
+                <p className="text-[10px] text-white/20">{project?.path}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={fetchProject}
+                className="flex items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 text-[11px] text-white/40 transition-all hover:bg-white/[0.06] hover:text-white/60"
+              >
+                <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
                 Rescan
               </button>
               <button
                 onClick={() => router.push(`/project/${projectId}/chat`)}
-                className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                className="flex items-center gap-1.5 rounded-lg bg-white/90 px-3 py-1.5 text-[11px] font-semibold text-black transition-all hover:bg-white"
               >
-                <MessageSquare className="h-4 w-4" />
+                <MessageSquare className="h-3 w-3" />
                 Chat
               </button>
             </div>
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 px-8">
+          <div className="flex gap-0.5 px-8">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -111,13 +111,13 @@ export default function ProjectPage() {
                   setActiveTab(tab.id);
                   if (tab.id === "dependencies" && !dependencies) fetchDependencies();
                 }}
-                className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm transition-colors ${
+                className={`flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-[11px] transition-all ${
                   activeTab === tab.id
-                    ? "border-primary text-primary"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
+                    ? "border-white/50 text-white/80"
+                    : "border-transparent text-white/25 hover:text-white/50"
                 }`}
               >
-                <tab.icon className="h-4 w-4" />
+                <tab.icon className="h-3 w-3" />
                 {tab.label}
               </button>
             ))}
@@ -126,127 +126,94 @@ export default function ProjectPage() {
 
         <div className="p-8">
           {loading && !project ? (
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="skeleton h-32 rounded-2xl" />
+                <div key={i} className="skeleton h-28 rounded-xl" />
               ))}
             </div>
           ) : (
             <>
               {activeTab === "overview" && project && (
-                <div className="space-y-6">
+                <div className="space-y-5">
                   {/* Stats Grid */}
-                  <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                     <MetricCard
-                      icon={<FileCode className="h-5 w-5 text-primary" />}
+                      icon={<FileCode className="h-4 w-4 text-white/40" />}
                       label="Files"
                       value={(project.total_files || 0).toString()}
                     />
                     <MetricCard
-                      icon={<Code2 className="h-5 w-5 text-green-400" />}
+                      icon={<Code2 className="h-4 w-4 text-white/40" />}
                       label="Lines of Code"
                       value={(project.total_lines || 0).toLocaleString()}
                     />
                     <MetricCard
-                      icon={<Cpu className="h-5 w-5 text-yellow-400" />}
+                      icon={<Cpu className="h-4 w-4 text-white/40" />}
                       label="Functions"
                       value={(mcp?.functions_extracted || 0).toString()}
                     />
                     <MetricCard
-                      icon={<Database className="h-5 w-5 text-purple-400" />}
+                      icon={<Database className="h-4 w-4 text-white/40" />}
                       label="Dependencies"
                       value={(mcp?.dependencies_mapped || 0).toString()}
                     />
                   </div>
 
                   {/* Info Blocks */}
-                  <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
                     {/* Languages */}
-                    <div className="rounded-2xl border border-border bg-card/50 p-6">
-                      <h3 className="mb-4 text-sm font-semibold">Languages</h3>
-                      <div className="flex flex-wrap gap-2">
+                    <div className="glass rounded-xl p-5">
+                      <h3 className="mb-3 text-[11px] font-medium uppercase tracking-widest text-white/25">Languages</h3>
+                      <div className="flex flex-wrap gap-1.5">
                         {(project.languages || []).map((lang: string) => (
-                          <span
-                            key={lang}
-                            className="rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary"
-                          >
-                            {lang}
-                          </span>
+                          <span key={lang} className="rounded-md bg-white/[0.06] px-2.5 py-1 text-[10px] font-medium text-white/50">{lang}</span>
                         ))}
                         {(!project.languages || project.languages.length === 0) && (
-                          <span className="text-xs text-muted-foreground">No languages detected</span>
+                          <span className="text-[10px] text-white/20">No languages detected</span>
                         )}
                       </div>
                     </div>
 
                     {/* Frameworks */}
-                    <div className="rounded-2xl border border-border bg-card/50 p-6">
-                      <h3 className="mb-4 text-sm font-semibold">Frameworks</h3>
-                      <div className="flex flex-wrap gap-2">
+                    <div className="glass rounded-xl p-5">
+                      <h3 className="mb-3 text-[11px] font-medium uppercase tracking-widest text-white/25">Frameworks</h3>
+                      <div className="flex flex-wrap gap-1.5">
                         {(project.frameworks || []).map((fw: string) => (
-                          <span
-                            key={fw}
-                            className="rounded-lg bg-green-500/10 px-3 py-1.5 text-xs font-medium text-green-400"
-                          >
-                            {fw}
-                          </span>
+                          <span key={fw} className="rounded-md bg-white/[0.06] px-2.5 py-1 text-[10px] font-medium text-white/50">{fw}</span>
                         ))}
                         {(!project.frameworks || project.frameworks.length === 0) && (
-                          <span className="text-xs text-muted-foreground">No frameworks detected</span>
+                          <span className="text-[10px] text-white/20">No frameworks detected</span>
                         )}
                       </div>
                     </div>
 
                     {/* Architecture */}
-                    <div className="rounded-2xl border border-border bg-card/50 p-6">
-                      <h3 className="mb-4 text-sm font-semibold">Architecture</h3>
-                      <p className="text-sm">
-                        {project.architecture_type || "Not determined"}
-                      </p>
+                    <div className="glass rounded-xl p-5">
+                      <h3 className="mb-3 text-[11px] font-medium uppercase tracking-widest text-white/25">Architecture</h3>
+                      <p className="text-[12px] text-white/50">{project.architecture_type || "Not determined"}</p>
                     </div>
 
                     {/* MCP Analysis */}
-                    <div className="rounded-2xl border border-border bg-card/50 p-6">
-                      <h3 className="mb-4 text-sm font-semibold">MCP Analysis</h3>
-                      <div className="space-y-2 text-xs">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Files Processed</span>
-                          <span>{mcp?.files_processed || 0}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Functions Extracted</span>
-                          <span>{mcp?.functions_extracted || 0}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Classes Extracted</span>
-                          <span>{mcp?.classes_extracted || 0}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Last Scan</span>
-                          <span>
-                            {mcp?.last_scan
-                              ? new Date(mcp.last_scan).toLocaleString()
-                              : "Never"}
-                          </span>
-                        </div>
+                    <div className="glass rounded-xl p-5">
+                      <h3 className="mb-3 text-[11px] font-medium uppercase tracking-widest text-white/25">MCP Analysis</h3>
+                      <div className="space-y-1.5 text-[11px]">
+                        <div className="flex justify-between"><span className="text-white/25">Files Processed</span><span className="text-white/60">{mcp?.files_processed || 0}</span></div>
+                        <div className="flex justify-between"><span className="text-white/25">Functions</span><span className="text-white/60">{mcp?.functions_extracted || 0}</span></div>
+                        <div className="flex justify-between"><span className="text-white/25">Classes</span><span className="text-white/60">{mcp?.classes_extracted || 0}</span></div>
+                        <div className="flex justify-between"><span className="text-white/25">Last Scan</span><span className="text-white/60">{mcp?.last_scan ? new Date(mcp.last_scan).toLocaleString() : "Never"}</span></div>
                       </div>
                     </div>
                   </div>
 
                   {/* Component Statistics */}
                   {stats && Object.keys(stats).length > 0 && (
-                    <div className="rounded-2xl border border-border bg-card/50 p-6">
-                      <h3 className="mb-4 text-sm font-semibold">Component Statistics</h3>
-                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div className="glass rounded-xl p-5">
+                      <h3 className="mb-3 text-[11px] font-medium uppercase tracking-widest text-white/25">Component Statistics</h3>
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                         {Object.entries(stats).map(([type, count]) => (
-                          <div
-                            key={type}
-                            className="rounded-xl bg-muted/50 p-4 text-center"
-                          >
-                            <p className="text-xl font-bold">{count}</p>
-                            <p className="text-[10px] text-muted-foreground capitalize">
-                              {type}
-                            </p>
+                          <div key={type} className="rounded-lg bg-white/[0.03] p-3 text-center">
+                            <p className="text-lg font-semibold text-white/80">{count}</p>
+                            <p className="text-[9px] text-white/25 capitalize">{type}</p>
                           </div>
                         ))}
                       </div>
@@ -256,14 +223,12 @@ export default function ProjectPage() {
               )}
 
               {activeTab === "structure" && (
-                <div className="rounded-2xl border border-border bg-card/50 p-6">
-                  <h3 className="mb-4 text-sm font-semibold">Project Structure</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Use the Chat tab to explore project structure with AI assistance.
-                  </p>
+                <div className="glass rounded-xl p-6">
+                  <h3 className="mb-3 text-[12px] font-medium text-white/60">Project Structure</h3>
+                  <p className="text-[11px] text-white/25">Use the Chat tab to explore project structure with AI assistance.</p>
                   <button
                     onClick={() => router.push(`/project/${projectId}/chat`)}
-                    className="mt-4 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+                    className="mt-3 rounded-lg bg-white/90 px-3 py-1.5 text-[11px] font-semibold text-black"
                   >
                     Open Chat
                   </button>
@@ -271,22 +236,17 @@ export default function ProjectPage() {
               )}
 
               {activeTab === "dependencies" && (
-                <div className="rounded-2xl border border-border bg-card/50 p-6">
-                  <h3 className="mb-4 text-sm font-semibold">Dependencies Analysis</h3>
+                <div className="glass rounded-xl p-6">
+                  <h3 className="mb-3 text-[12px] font-medium text-white/60">Dependencies Analysis</h3>
                   {dependencies ? (
-                    <pre className="max-h-96 overflow-auto rounded-xl bg-muted/50 p-4 text-xs">
+                    <pre className="max-h-96 overflow-auto rounded-lg bg-white/[0.02] p-3 text-[10px] text-white/50">
                       {JSON.stringify(dependencies, null, 2)}
                     </pre>
                   ) : (
                     <div className="flex flex-col items-center py-8">
-                      <GitBranch className="mb-3 h-8 w-8 text-muted-foreground/50" />
-                      <p className="text-sm text-muted-foreground">
-                        Click to analyze dependencies
-                      </p>
-                      <button
-                        onClick={fetchDependencies}
-                        className="mt-3 rounded-xl bg-primary/10 px-4 py-2 text-sm text-primary"
-                      >
+                      <GitBranch className="mb-3 h-6 w-6 text-white/10" />
+                      <p className="text-[11px] text-white/25">Click to analyze dependencies</p>
+                      <button onClick={fetchDependencies} className="mt-3 rounded-lg bg-white/[0.06] px-3 py-1.5 text-[11px] text-white/50 hover:bg-white/[0.1]">
                         Analyze
                       </button>
                     </div>
@@ -311,12 +271,12 @@ function MetricCard({
   value: string;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-card/50 p-5">
-      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-muted">
+    <div className="glass rounded-xl p-4">
+      <div className="mb-2 flex h-7 w-7 items-center justify-center rounded-md bg-white/[0.04]">
         {icon}
       </div>
-      <p className="text-2xl font-bold">{value}</p>
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-xl font-semibold tracking-tight text-white/85">{value}</p>
+      <p className="text-[10px] text-white/25">{label}</p>
     </div>
   );
 }
