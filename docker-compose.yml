@@ -3,7 +3,8 @@ version: "3.9"
 services:
   app:
     build: .
-    network_mode: host
+    ports:
+      - "8000:8000"
     env_file:
       - .env
     depends_on:
@@ -14,6 +15,8 @@ services:
     volumes:
       - .:/app
       - ${HOST_PROJECTS_ROOT:-..}:/host-projects
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
   postgres:
@@ -75,7 +78,7 @@ services:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=https://mcp.nomeai.space
-      - INTERNAL_API_URL=https://mcp.nomeai.space
+      - INTERNAL_API_URL=http://app:8000
     depends_on:
       - app
     restart: unless-stopped
