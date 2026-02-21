@@ -129,7 +129,7 @@ def create_app() -> FastAPI:
             return await call_next(request)
 
         public_paths = {"/health", "/docs", "/openapi.json", "/redoc", "/get-mcp-conf", "/mcp-config", "/dashboard"}
-        if request.url.path in public_paths or request.url.path.startswith("/docs") or request.url.path.startswith("/mcp") or request.url.path.startswith("/projects"):
+        if request.url.path in public_paths or request.url.path.startswith("/docs") or request.url.path.startswith("/mcp") or request.url.path.startswith("/projects") or request.url.path.startswith("/chat"):
             return await call_next(request)
 
         provided_key = request.headers.get("x-api-key")
@@ -156,6 +156,7 @@ def create_app() -> FastAPI:
     from app.api.semantic import router as semantic_router
     from app.api.enhanced import router as enhanced_router
     from app.api.advanced import router as advanced_router
+    from app.api.chat import router as chat_router
 
     app.include_router(health_router)
     app.include_router(agents_router)
@@ -166,6 +167,7 @@ def create_app() -> FastAPI:
     app.include_router(semantic_router)
     app.include_router(enhanced_router)
     app.include_router(advanced_router)
+    app.include_router(chat_router)
 
     return app
 
